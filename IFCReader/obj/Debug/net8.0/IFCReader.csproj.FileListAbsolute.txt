@@ -1,0 +1,15 @@
+/Users/kalim/Documents/etudes/ALOO/ifcreader/IFCFileReader/IFCReader/bin/IFCReader
+/Users/kalim/Documents/etudes/ALOO/ifcreader/IFCFileReader/IFCReader/bin/IFCReader.deps.json
+/Users/kalim/Documents/etudes/ALOO/ifcreader/IFCFileReader/IFCReader/bin/IFCReader.runtimeconfig.json
+/Users/kalim/Documents/etudes/ALOO/ifcreader/IFCFileReader/IFCReader/bin/IFCReader.dll
+/Users/kalim/Documents/etudes/ALOO/ifcreader/IFCFileReader/IFCReader/bin/IFCReader.pdb
+/Users/kalim/Documents/etudes/ALOO/ifcreader/IFCFileReader/IFCReader/obj/Debug/net8.0/IFCReader.GeneratedMSBuildEditorConfig.editorconfig
+/Users/kalim/Documents/etudes/ALOO/ifcreader/IFCFileReader/IFCReader/obj/Debug/net8.0/IFCReader.AssemblyInfoInputs.cache
+/Users/kalim/Documents/etudes/ALOO/ifcreader/IFCFileReader/IFCReader/obj/Debug/net8.0/IFCReader.AssemblyInfo.cs
+/Users/kalim/Documents/etudes/ALOO/ifcreader/IFCFileReader/IFCReader/obj/Debug/net8.0/IFCReader.csproj.CoreCompileInputs.cache
+/Users/kalim/Documents/etudes/ALOO/ifcreader/IFCFileReader/IFCReader/obj/Debug/net8.0/IFCReader.sourcelink.json
+/Users/kalim/Documents/etudes/ALOO/ifcreader/IFCFileReader/IFCReader/obj/Debug/net8.0/IFCReader.dll
+/Users/kalim/Documents/etudes/ALOO/ifcreader/IFCFileReader/IFCReader/obj/Debug/net8.0/refint/IFCReader.dll
+/Users/kalim/Documents/etudes/ALOO/ifcreader/IFCFileReader/IFCReader/obj/Debug/net8.0/IFCReader.pdb
+/Users/kalim/Documents/etudes/ALOO/ifcreader/IFCFileReader/IFCReader/obj/Debug/net8.0/IFCReader.genruntimeconfig.cache
+/Users/kalim/Documents/etudes/ALOO/ifcreader/IFCFileReader/IFCReader/obj/Debug/net8.0/ref/IFCReader.dll
