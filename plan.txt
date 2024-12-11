@@ -1,0 +1,52 @@
+Plan général :
+
+1 - Etude du format IFC :
+
+Etant donné mon manque d'expérience avec ce format et l'absence d'indication en amont, 
+il faudra tout d'abord l'analyser afin de comprendre ses spécifications et leurs données 
+pour bien structurer leur import dans le projet, un travail qui aurait clairement gagné 
+en efficacité avec une ligne directrice initiale claire. 
+Il faudra aussi trouver les différentes bibliothèques qui traitent ce type de fichier 
+pour savoir lesquelles sont les plus adaptée pour ce dont on a besoin (manipulation et affichage dans le frontend).
+
+2 - Choix des outils :
+
+A partir de ce qui aura été défini précédemment il va falloir choisir les outils front-end et back-end les plus adaptés pour ce que l'on veut.
+ Se renseigner notamment sur le langage de base pour le front et le back, les librairies à utiliser etc... 
+Tout d'abord la librairie pour manipuler les données des fichiers IFC, puis celle pour l'affichage 3D de ce 
+qui sort des données et la logique éventuelle dans le backend derrière.
+Là encore, une phase de recherche aurait pu être évitée avec des consignes techniques minimales. 
+Quoi qu’il en soit, nous allons avancer sur ce point sans ces éléments en main.
+
+3 - Phase de développement :
+     1) Etude de la faisabilité à petite échelle :
+         Intégration des bibliothèques et des tests initiaux pour vérifier que ça fonctionne déjà comme ça.
+     2) Développement du viewer :
+         Création des modules d'affichage, de chargement et de navigation de base.
+     3) Tests et validation :
+         Tests avec plus de fichiers, tests de performance, validation avec l'équipe pour s'assurer que c'est ce qu'ils voulaient etc...
+     4) Documentation :
+         Rédaction de documentation afin de faciliter la reprise du code si il faut. Et rédaction d'un guide utilisateur pour l'import des fichiers et la navigation.
+
+Détail technique : 
+
+1 - Extraction des fichiers IFC (spec 2x3) importés :
+
+Création de fonctions en C# permettant la lecture de fichier IFC sans bibliothèque externes. 
+Petits tests de petits code permettant d'extraire des infos des fichiers IFC d'abord en prenant en compte la complexité du format.
+Créations de script de structuration des données extraites en C#.
+
+2 - Test à part de la modélisaiton 3d de fichiers IFC :
+
+Recherche de solution pour la modélisation 3D de ce qui sort des fichiers IFC et petits tests.
+
+3 - Création de l'interface :
+
+Création de l'interface dans laquelle il y aura la visualisaiton 3D, l'importatioin des fichiers etc... côté utilisateur.
+
+3 - Intégration du tout
+
+4 - Tests et validatioin :
+
+Tests et validation pour vérifier que tout fonctionne comme il faut sans bug. Tests avec énormément de fichiers, des fichiers avec info manquantes pour voir etc...
+
