@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("IFCReader")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b52e8ac1da12f3ac50949f4f67e3b3ba06d8bcc9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d71049631aa54404f2abd2f41fa12cccf3547ac9")]
 [assembly: System.Reflection.AssemblyProductAttribute("IFCReader")]
 [assembly: System.Reflection.AssemblyTitleAttribute("IFCReader")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
