@@ -2,6 +2,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Collections.Generic;
 using IFCReader.Models;
@@ -10,6 +11,11 @@ public class Viewer3D
 {
     private readonly List<IFCFigure> figures = new List<IFCFigure>();
     private int shaderProgram;
+
+    // Variables de caméra pour la navigation
+    private Vector3 cameraPosition = new Vector3(3f, 3f, 3f);
+    private Vector3 cameraTarget = Vector3.Zero;
+    private float cameraSpeed = 2.5f; // vitesse de déplacement
 
     public void AddFigure(IFCFigure figure)
     {
@@ -28,12 +34,16 @@ public class Viewer3D
 
         using (var window = new GameWindow(GameWindowSettings.Default, settings))
         {
+            // Optionnel : positionnement de la fenêtre
+            window.Location = new Vector2i(100, 100);
+
             window.Load += () =>
             {
                 shaderProgram = CreateShaderProgram();
                 GL.ClearColor(0f, 0f, 0f, 1f);
                 GL.Enable(EnableCap.DepthTest);
 
+                // Initialiser les buffers de chaque figure (ici pour IFCAxis)
                 foreach (var figure in figures)
                 {
                     if (figure is IFCAxis axis)
@@ -41,6 +51,27 @@ public class Viewer3D
                         axis.InitializeBuffers();
                     }
                 }
+            };
+
+            window.UpdateFrame += (FrameEventArgs args) =>
+            {
+                var input = window.KeyboardState;
+                float move = cameraSpeed * (float)args.Time;
+                
+                // Utiliser les flèches directionnelles pour se déplacer horizontalement
+                if (input.IsKeyDown(Keys.Up))
+                    cameraPosition.Z -= move;
+                if (input.IsKeyDown(Keys.Down))
+                    cameraPosition.Z += move;
+                if (input.IsKeyDown(Keys.Left))
+                    cameraPosition.X -= move;
+                if (input.IsKeyDown(Keys.Right))
+                    cameraPosition.X += move;
+                // Space pour monter et LeftShift pour descendre
+                if (input.IsKeyDown(Keys.Space))
+                    cameraPosition.Y += move;
+                if (input.IsKeyDown(Keys.LeftShift))
+                    cameraPosition.Y -= move;
             };
 
             window.Resize += (ResizeEventArgs e) =>
@@ -53,14 +84,14 @@ public class Viewer3D
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
                 GL.UseProgram(shaderProgram);
 
-                // Définition des matrices de transformation
+                // Définir les matrices de transformation
                 Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(
                     MathHelper.DegreesToRadians(45f),
                     window.ClientSize.X / (float)window.ClientSize.Y,
                     0.1f,
                     100f
                 );
-                Matrix4 view = Matrix4.LookAt(new Vector3(3f, 3f, 3f), Vector3.Zero, Vector3.UnitY);
+                Matrix4 view = Matrix4.LookAt(cameraPosition, cameraTarget, Vector3.UnitY);
                 Matrix4 model = Matrix4.Identity;
 
                 int projLocation = GL.GetUniformLocation(shaderProgram, "uProjection");
@@ -71,7 +102,6 @@ public class Viewer3D
                 GL.UniformMatrix4(viewLocation, false, ref view);
                 GL.UniformMatrix4(modelLocation, false, ref model);
 
-                // Rendu de toutes les figures
                 foreach (var figure in figures)
                 {
                     figure.Render();

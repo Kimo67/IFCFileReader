@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using System.IO;
+using System.Collections.Generic;
 using IFCReader.Models;
 using IFCFileReader.Services;
 
@@ -19,46 +21,61 @@ class Program
         var parser = new IFCFileParser();
         var parsedData = parser.Parse(filePath);
 
-        // Récupérer les données pour l'axe #2 pour le test
-        var axisData = parsedData["IFCAXIS2PLACEMENT3D"].FirstOrDefault(x => x.StartsWith("#2"));
-        if (axisData == null)
+        // Vérifier que le fichier contient des axes
+        if (!parsedData.ContainsKey("IFCAXIS2PLACEMENT3D"))
         {
-            Console.WriteLine("L'axe #2 est introuvable.");
+            Console.WriteLine("Aucun axe (IFCAXIS2PLACEMENT3D) n'a été trouvé dans le fichier.");
             return;
         }
 
-        // Extraire les ID
-        var axisComponents = axisData.Split(new[] { "(", ")", "#" }, StringSplitOptions.RemoveEmptyEntries);
-        string originId = axisComponents[1].Trim(',');
-        string zDirectionId = axisComponents[2].Trim(',');
-        string xDirectionId = axisComponents[3].Trim(',');
-        
-        Console.WriteLine($"Origin ID : {originId}");
-        Console.WriteLine($"Z Direction ID : {zDirectionId}");
-        Console.WriteLine($"X Direction ID : {xDirectionId}");
+        var axesData = parsedData["IFCAXIS2PLACEMENT3D"];
+        List<IFCAxis> axes = new List<IFCAxis>();
 
-        // Récupérer les données associées
-        var originData = parsedData["IFCCARTESIANPOINT"].FirstOrDefault(x => x.StartsWith($"#{originId}"));
-        var zDirectionData = parsedData["IFCDIRECTION"].FirstOrDefault(x => x.StartsWith($"#{zDirectionId}"));
-        var xDirectionData = parsedData["IFCDIRECTION"].FirstOrDefault(x => x.StartsWith($"#{xDirectionId}"));
-
-        Console.WriteLine($"Données de l'origine : {originData}");
-        Console.WriteLine($"Données de la direction Z : {zDirectionData}");
-        Console.WriteLine($"Données de la direction X : {xDirectionData}");
-
-
-        if (originData == null || zDirectionData == null || xDirectionData == null)
+        // Parcourir tous les axes
+        foreach (var axisData in axesData)
         {
-            Console.WriteLine("Impossible de récupérer les données associées à l'axe #2.");
+            // Exemple de chaîne attendue : "#2 ((#3),(#4),(#5))"
+            // On découpe la chaîne pour extraire les identifiants
+            var components = axisData.Split(new[] { "(", ")", "#" }, StringSplitOptions.RemoveEmptyEntries);
+            // On attend au moins 4 éléments : [id de l'axe, id origine, id direction Z, id direction X]
+            if (components.Length < 4)
+            {
+                Console.WriteLine("Format inattendu pour l'axe: " + axisData);
+                continue;
+            }
+            string originId = components[1].Trim(',');
+            string zDirectionId = components[2].Trim(',');
+            string xDirectionId = components[3].Trim(',');
+
+            // Récupérer les données associées
+            var originData = parsedData["IFCCARTESIANPOINT"].FirstOrDefault(x => x.StartsWith($"#{originId}"));
+            var zDirectionData = parsedData["IFCDIRECTION"].FirstOrDefault(x => x.StartsWith($"#{zDirectionId}"));
+            var xDirectionData = parsedData["IFCDIRECTION"].FirstOrDefault(x => x.StartsWith($"#{xDirectionId}"));
+
+            if (originData == null || zDirectionData == null || xDirectionData == null)
+            {
+                Console.WriteLine($"Données manquantes pour l'axe avec origine #{originId}");
+                continue;
+            }
+
+            // Créer l'axe et l'ajouter à la liste
+            var axis = new IFCAxis(originData, xDirectionData, zDirectionData);
+            axes.Add(axis);
+            Console.WriteLine($"Axe ajouté : Origine #{originId}, Z #{zDirectionId}, X #{xDirectionId}");
+        }
+
+        if (axes.Count == 0)
+        {
+            Console.WriteLine("Aucun axe valide n'a été trouvé.");
             return;
         }
 
-        // Créer une instance d'IFCAxis
-        var axis = new IFCAxis(originData, xDirectionData, zDirectionData);
-
-        // Lancer le viewer OpenTK
+        // Lancer le viewer OpenTK et ajouter tous les axes
         Viewer3D viewer = new Viewer3D();
-        viewer.AddFigure(axis);
+        foreach (var axis in axes)
+        {
+            viewer.AddFigure(axis);
+        }
         viewer.Run();
     }
 }
