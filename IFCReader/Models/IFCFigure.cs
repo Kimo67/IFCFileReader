@@ -4,10 +4,8 @@ namespace IFCReader.Models
 {
     public abstract class IFCFigure
     {
-        // Méthode abstraite pour le rendu OpenGL qui sera implémenté dans les classes qui en héritent
         public abstract void Render();
 
-        // Méthode pour décoder un Point3D
        protected Vector3 DecodeCartesianPoint(string cartesianPoint)
         {
             var coords = cartesianPoint
@@ -21,7 +19,7 @@ namespace IFCReader.Models
         }
 
 
-        // Méthode utilitaire pour décoder un Vector3
+        // Méthode pour décoder un Vector3
         protected Vector3 DecodeDirection(string direction)
         {
             var coords = direction

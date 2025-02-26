@@ -1,4 +1,4 @@
-using OpenTK.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 namespace IFCReader.Models
@@ -9,6 +9,10 @@ namespace IFCReader.Models
         private Vector3 XDirection { get; }
         private Vector3 ZDirection { get; }
 
+        private int vao;
+        private int vbo;
+        private int vertexCount;
+
         public IFCAxis(string originData, string xDirectionData, string zDirectionData)
         {
             Origin = DecodeCartesianPoint(originData);
@@ -16,21 +20,42 @@ namespace IFCReader.Models
             ZDirection = DecodeDirection(zDirectionData);
         }
 
+        public void InitializeBuffers()
+        {
+            float[] vertices = new float[]
+            {
+                // Axe X (rouge)
+                Origin.X, Origin.Y, Origin.Z,      1.0f, 0.0f, 0.0f,
+                Origin.X + XDirection.X, Origin.Y + XDirection.Y, Origin.Z + XDirection.Z, 1.0f, 0.0f, 0.0f,
+
+                // Axe Z (bleu)
+                Origin.X, Origin.Y, Origin.Z,      0.0f, 0.0f, 1.0f,
+                Origin.X + ZDirection.X, Origin.Y + ZDirection.Y, Origin.Z + ZDirection.Z, 0.0f, 0.0f, 1.0f
+            };
+            vertexCount = 4;
+
+            vao = GL.GenVertexArray();
+            vbo = GL.GenBuffer();
+
+            GL.BindVertexArray(vao);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
+
+            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
+            GL.EnableVertexAttribArray(1);
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.BindVertexArray(0);
+        }
+
         public override void Render()
         {
-            GL.Begin(PrimitiveType.Lines);
-
-            // Axe X (rouge)
-            GL.Color3(1.0f, 0.0f, 0.0f);
-            GL.Vertex3(Origin);
-            GL.Vertex3(Origin + XDirection);
-
-            // Axe Z (bleu)
-            GL.Color3(0.0f, 0.0f, 1.0f);
-            GL.Vertex3(Origin);
-            GL.Vertex3(Origin + ZDirection);
-
-            GL.End();
+            GL.BindVertexArray(vao);
+            GL.DrawArrays(PrimitiveType.Lines, 0, vertexCount);
+            GL.BindVertexArray(0);
         }
     }
 }
