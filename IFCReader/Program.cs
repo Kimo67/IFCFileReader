@@ -1,81 +1,47 @@
 using System;
-using System.Linq;
-using System.IO;
 using System.Collections.Generic;
-using IFCReader.Models;
-using IFCFileReader.Services;
+using System.IO;
+using IFCFileReader.Services;          // IFCFileParser
+using IFCReader.Scene;                 // SceneBuilder, Scene
+using OpenTK.Mathematics;              // Vector3
 
 class Program
 {
-    static void Main(string[] args)
+    private const string IFC_FILE = "data/projet.ifc";
+
+    static void Main()
     {
-        string filePath = "data/Projet.ifc";
-
-        if (!File.Exists(filePath))
+        if (!File.Exists(IFC_FILE))
         {
-            Console.WriteLine($"Le fichier '{filePath}' est introuvable.");
+            Console.WriteLine($"⛔ Fichier introuvable : {IFC_FILE}");
             return;
         }
 
-        // Charger et parser le fichier IFC
-        var parser = new IFCFileParser();
-        var parsedData = parser.Parse(filePath);
+        // 1. Parse IFC (dictionnaire ID → params)
+        var db = new IFCFileParser().Parse(IFC_FILE);
 
-        // Vérifier que le fichier contient des axes
-        if (!parsedData.ContainsKey("IFCAXIS2PLACEMENT3D"))
+        // 2. Construit la scène (pour l'instant : seulement les murs)
+        var scene = new SceneBuilder()
+                .AddExtractor(new WallExtractor(
+                    rectColor : new Vector3(1,1,0),
+                    arbColor  : new Vector3(0,1,1)))
+                .AddExtractor(new ColumnExtractor(
+                    rectColor : new Vector3(1,1,0),
+                    circColor : new Vector3(1,0,1)))
+                .Build(db);
+
+
+        if (scene.Figures.Count == 0)
         {
-            Console.WriteLine("Aucun axe (IFCAXIS2PLACEMENT3D) n'a été trouvé dans le fichier.");
+            Console.WriteLine("Aucun élément à afficher.");
             return;
         }
 
-        var axesData = parsedData["IFCAXIS2PLACEMENT3D"];
-        List<IFCAxis> axes = new List<IFCAxis>();
+        scene.LogSummary();
 
-        // Parcourir tous les axes
-        foreach (var axisData in axesData)
-        {
-            // Exemple de chaîne attendue : "#2 ((#3),(#4),(#5))"
-            // On découpe la chaîne pour extraire les identifiants
-            var components = axisData.Split(new[] { "(", ")", "#" }, StringSplitOptions.RemoveEmptyEntries);
-            // On attend au moins 4 éléments : [id de l'axe, id origine, id direction Z, id direction X]
-            if (components.Length < 4)
-            {
-                Console.WriteLine("Format inattendu pour l'axe: " + axisData);
-                continue;
-            }
-            string originId = components[1].Trim(',');
-            string zDirectionId = components[2].Trim(',');
-            string xDirectionId = components[3].Trim(',');
-
-            // Récupérer les données associées
-            var originData = parsedData["IFCCARTESIANPOINT"].FirstOrDefault(x => x.StartsWith($"#{originId}"));
-            var zDirectionData = parsedData["IFCDIRECTION"].FirstOrDefault(x => x.StartsWith($"#{zDirectionId}"));
-            var xDirectionData = parsedData["IFCDIRECTION"].FirstOrDefault(x => x.StartsWith($"#{xDirectionId}"));
-
-            if (originData == null || zDirectionData == null || xDirectionData == null)
-            {
-                Console.WriteLine($"Données manquantes pour l'axe avec origine #{originId}");
-                continue;
-            }
-
-            // Créer l'axe et l'ajouter à la liste
-            var axis = new IFCAxis(originData, xDirectionData, zDirectionData);
-            axes.Add(axis);
-            Console.WriteLine($"Axe ajouté : Origine #{originId}, Z #{zDirectionId}, X #{xDirectionId}");
-        }
-
-        if (axes.Count == 0)
-        {
-            Console.WriteLine("Aucun axe valide n'a été trouvé.");
-            return;
-        }
-
-        // Lancer le viewer OpenTK et ajouter tous les axes
-        Viewer3D viewer = new Viewer3D();
-        foreach (var axis in axes)
-        {
-            viewer.AddFigure(axis);
-        }
+        // 3. Affichage OpenGL
+        var viewer = new Viewer3D();
+        viewer.AddFigures(scene.Figures);
         viewer.Run();
     }
 }
