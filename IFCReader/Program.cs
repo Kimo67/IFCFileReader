@@ -28,6 +28,7 @@ class Program
                 .AddExtractor(new ColumnExtractor(
                     rectColor : new Vector3(1,1,0),
                     circColor : new Vector3(1,0,1)))
+                .AddExtractor(new SlabExtractor(new Vector3(0.8f,0.5f,0.2f)))
                 .Build(db);
 
 

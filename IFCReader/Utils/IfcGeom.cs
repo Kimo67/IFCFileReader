@@ -32,6 +32,39 @@ namespace IFCReader.Utils
             origin = new Vector3(p[0], p[1], p.Length > 2 ? p[2] : 0);
             return true;
         }
+       
+        public static bool AbsoluteOrigin(string localPlacementId,
+                                        Dictionary<string, Dictionary<string,string>> db,
+                                        out Vector3 origin)
+        {
+            origin = Vector3.Zero;
+
+            // remonte la chaîne PlacementRelTo → … jusqu’à $
+            string plcId = localPlacementId;
+            var visited  = new HashSet<string>();
+
+            while (plcId != "$" && visited.Add(plcId))
+            {
+                if (!db["IFCLOCALPLACEMENT"].TryGetValue(plcId, out var plc)) return false;
+
+                var parts = plc.Split(',').Select(p => p.Trim()).ToArray();
+                if (parts.Length < 2) return false;
+
+                string relTo    = parts[0];          // peut être "$"
+                string axisId   = parts[1].TrimStart('#');
+
+                if (!db["IFCAXIS2PLACEMENT3D"].TryGetValue(axisId, out var axis)) return false;
+                string cartId = IdRegex.Match(axis).Groups[1].Value;
+
+                var v = db["IFCCARTESIANPOINT"][cartId]
+                        .Trim('(', ')').Split(',')
+                        .Select(s => float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                origin += new Vector3(v[0], v[1], v.Length > 2 ? v[2] : 0);
+
+                plcId = relTo.TrimStart('#');        // passe au parent
+            }
+            return true;
+        }
 
         public static string? FindExtrudedSolid(string pds,
                                                 Dictionary<string, Dictionary<string,string>> db)

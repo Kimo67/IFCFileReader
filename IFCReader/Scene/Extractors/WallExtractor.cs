@@ -36,7 +36,7 @@ namespace IFCReader.Scene
                 string placementId = ids[1];
                 string pdsId       = ids[2];
 
-                if (!IfcGeom.TryGetOrigin(placementId, db, out var origin)) continue;
+                if (!IfcGeom.AbsoluteOrigin(placementId, db, out var origin)) continue;
                 if (!db["IFCPRODUCTDEFINITIONSHAPE"].TryGetValue(pdsId, out var pds)) continue;
 
                 var solidId = IfcGeom.FindExtrudedSolid(pds, db);
