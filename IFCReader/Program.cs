@@ -7,7 +7,7 @@ using OpenTK.Mathematics;              // Vector3
 
 class Program
 {
-    private const string IFC_FILE = "data/projet.ifc";
+    private const string IFC_FILE = "data/Projet.ifc";
 
     static void Main()
     {

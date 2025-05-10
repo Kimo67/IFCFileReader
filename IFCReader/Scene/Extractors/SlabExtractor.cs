@@ -1,4 +1,3 @@
-// src/Scene/Extractors/SlabExtractor.cs
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -16,7 +15,7 @@ namespace IFCReader.Scene
         public SlabExtractor(Vector3 color) => _color = color;
 
         public void Extract(Dictionary<string, Dictionary<string,string>> db,
-                            List<IFCFigure> figs)
+                             List<IFCFigure> figs)
         {
             if (!db.TryGetValue("IFCSLAB", out var slabs)) return;
 
@@ -28,26 +27,30 @@ namespace IFCReader.Scene
                 string plcId = ids[1];
                 string pdsId = ids[2];
 
-                if (!IfcGeom.AbsoluteOrigin(plcId, db, out var origin)) continue;
+                
+                if (!IfcGeom.WorldTransform(plcId, db, out var world)) continue;
                 if (!db["IFCPRODUCTDEFINITIONSHAPE"].TryGetValue(pdsId, out var pds)) continue;
 
                 var solidId = IfcGeom.FindExtrudedSolid(pds, db);
                 if (solidId == null || !db["IFCEXTRUDEDAREASOLID"].TryGetValue(solidId, out var solid)) continue;
 
-                var tok = solid.Trim('(', ')').Split(',').Select(t => t.Trim()).ToArray();
+                var tok = solid.Trim('(', ')').Split(',').Select(s => s.Trim()).ToArray();
                 if (tok.Length < 4) continue;
 
                 string profileId = tok[0].TrimStart('#');
-                if (!float.TryParse(tok[3], NumberStyles.Float, CultureInfo.InvariantCulture, out float depth))
-                    continue;
+                Vector3 dirLocal = IfcGeom.DirectionVector(tok[2], db);
+                if (!float.TryParse(tok[3], NumberStyles.Float, CultureInfo.InvariantCulture, out float depth)) continue;
 
-                // extrusion vers +Z ou -Z
-                Vector3 extrusion = IfcGeom.DirectionVector(tok[2], db) * depth;
+                Vector3 dirWorld = Vector3.TransformNormal(dirLocal, world).Normalized();
+                var extrusion = dirWorld * depth;
 
-                var verts = IfcGeom.ProfileVertices(profileId, db, origin, out _);
-                if (verts == null || verts.Count < 3) continue;
+                var vertsLocal = IfcGeom.ProfileVertices(profileId, db, Vector3.Zero, out _);
+                if (vertsLocal == null) continue;
 
-                figs.Add(new IFCWall(verts, extrusion, _color)); // même classe que les murs
+                var vertsWorld = vertsLocal.Select(v => Vector3.TransformPosition(v, world))
+                                           .ToList();
+
+                figs.Add(new IFCWall(vertsWorld, extrusion, _color));   // ré-emploi IFCWall
                 _count++;
             }
         }
