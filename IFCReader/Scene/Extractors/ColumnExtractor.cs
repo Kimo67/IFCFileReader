@@ -50,7 +50,7 @@ namespace IFCReader.Scene
                 Vector3 dir = IfcGeom.DirectionVector(dirToken, db);
                 var extrusion = dir * depth;
 
-                // rectangle or circle ?
+                // rectangle ou circle ?
                 bool isRect;
                 var verts = IfcGeom.ProfileVertices(profileId, db, origin, out isRect);
                 if (isRect && verts != null)

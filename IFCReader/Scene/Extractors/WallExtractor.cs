@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace IFCReader.Scene
     {
         private readonly Vector3 _rectColor;
         private readonly Vector3 _arbColor;
-        private int _nRect, _nArb;
+        private int _nRect, _nArb, _nAxisFallback;
 
         public WallExtractor(Vector3 rectColor, Vector3 arbColor)
         {
@@ -22,44 +23,71 @@ namespace IFCReader.Scene
         public void Extract(Dictionary<string, Dictionary<string,string>> db,
                              List<IFCFigure> figs)
         {
-            if (!db.TryGetValue("IFCWALLSTANDARDCASE", out var walls)) return;
+            _nRect = _nArb = _nAxisFallback = 0;
 
-            foreach (var wall in walls.Values)
+            string key = db.ContainsKey("IFCWALLSTANDARDCASE") ? "IFCWALLSTANDARDCASE"
+                       : db.ContainsKey("IFCWALL")             ? "IFCWALL" : null;
+            if (key == null) return;
+
+            foreach (var wall in db[key].Values)
             {
-                var ids = IfcGeom.IdMatches(wall).ToArray();
+                var ids = IfcGeom.IdMatches(wall).ToArray();             
                 if (ids.Length < 3) continue;
 
                 string plcId = ids[1];
                 string pdsId = ids[2];
 
-                
-                if (!IfcGeom.WorldTransform(plcId, db, out var world)) continue;
-                if (!db["IFCPRODUCTDEFINITIONSHAPE"].TryGetValue(pdsId, out var pds)) continue;
+                if (!IfcGeom.WorldTransform(plcId, db, out var mWorld)) continue;
 
-                var solidId = IfcGeom.FindExtrudedSolid(pds, db);
-                if (solidId == null || !db["IFCEXTRUDEDAREASOLID"].TryGetValue(solidId, out var solid)) continue;
+                if (!db.TryGetValue("IFCPRODUCTDEFINITIONSHAPE", out var pdsDict) ||
+                    !pdsDict.TryGetValue(pdsId, out var pds)) continue;
 
-                var tok = solid.Trim('(', ')').Split(',').Select(s => s.Trim()).ToArray();
-                if (tok.Length < 4) continue;
+                string? solidId = IfcGeom.FindExtrudedSolid(pds, db);
+                if (solidId == null)
+                {
+                    foreach (var repId in IfcGeom.IdMatches(pds))
+                    {
+                        if (db.TryGetValue("IFCSHAPEREPRESENTATION", out var repDict) &&
+                            repDict.TryGetValue(repId, out var repParams))
+                        {
+                            solidId = IfcGeom.IdMatches(repParams)
+                                           .FirstOrDefault(id => db["IFCEXTRUDEDAREASOLID"].ContainsKey(id));
+                            if (solidId != null) break;
+                        }
+                    }
+                }
+                if (solidId == null) continue;
 
-                string profileId = tok[0].TrimStart('#');
-                Vector3 dirLocal = IfcGeom.DirectionVector(tok[2], db);
-                if (!float.TryParse(tok[3], NumberStyles.Float, CultureInfo.InvariantCulture, out float depth)) continue;
+                var solid = db["IFCEXTRUDEDAREASOLID"][solidId]
+                            .Trim('(', ')').Split(',').Select(t => t.Trim()).ToArray();
+                if (solid.Length < 3) continue;
 
-                Vector3 dirWorld = Vector3.TransformNormal(dirLocal, world).Normalized();
-                var extrusion = dirWorld * depth;
+                string profileId = solid[0].TrimStart('#');
+                Vector3 dirLocal = IfcGeom.DirectionVector(solid[^2], db); // avant-dernier
+                if (!float.TryParse(solid[^1], NumberStyles.Float, CultureInfo.InvariantCulture, out float depth))
+                    continue;
+
+                Vector3 extrusion = Vector3.TransformNormal(dirLocal * depth, mWorld);
+                Vector3 originW   = Vector3.TransformPosition(Vector3.Zero, mWorld);
 
                 var vertsLocal = IfcGeom.ProfileVertices(profileId, db, Vector3.Zero, out bool isRect);
-                if (vertsLocal == null) continue;
 
-                var vertsWorld = vertsLocal.Select(v => Vector3.TransformPosition(v, world))
-                                           .ToList();
-
-                figs.Add(new IFCWall(vertsWorld, extrusion, isRect ? _rectColor : _arbColor));
-                if (isRect) _nRect++; else _nArb++;
+                if (vertsLocal != null)
+                {
+                    var vertsWorld = vertsLocal.Select(v => Vector3.TransformPosition(v, mWorld)).ToList();
+                    figs.Add(new IFCWall(vertsWorld, extrusion, isRect ? _rectColor : _arbColor));
+                    if (isRect) _nRect++; else _nArb++;
+                }
+                else
+                {
+                    // fallback : dessine juste l’axe
+                    figs.Add(new IFCSegment(originW, originW + extrusion));
+                    _nAxisFallback++;
+                }
             }
         }
 
-        public string SummaryLine => $"Walls → Rect:{_nRect}  Arbitrary:{_nArb}";
+        public string SummaryLine =>
+            $"Walls → Rect:{_nRect}  Arbitrary:{_nArb}  AxisFallback:{_nAxisFallback}";
     }
 }

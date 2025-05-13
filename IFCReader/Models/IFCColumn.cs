@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace IFCReader.Models
 {
-    /// <summary>Représente un poteau extrudé.</summary>
+    /// Représente un poteau.
     public class IFCColumn : IFCFigure, IDisposable
     {
         private readonly int vbo;
