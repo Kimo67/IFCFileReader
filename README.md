@@ -1,11 +1,57 @@
-# Projet : Viewer IFC pour plan-de-maison
+# IFCReader – Visualiseur 3D léger pour fichiers IFC
 
-## Introduction
-Ce projet est réalisé dans le cadre de notre collaboration avec l'entreprise tout-système pour l'import des projets Meow sur la plateforme de plan-de-maison. L'objectif est de développer un visualiseur (viewer) de fichiers IFC permettant l'affichage en 2D et en 3D des plans et modèles générés par Meow.
+Ce projet permet d’afficher la géométrie de base
+(Murs, Dalles, Poteaux, Axes) d’un fichier **IFC**.
+Il fonctionne avec :
 
-## Objectif principal
-- Créer un visualiseur pour les fichiers IFC exportés par Meow, comprenant :
-  - Une visualisation 2D des plans.
-  - Une visualisation 3D des modèles architecturaux.
-- Tester la faisabilité de l'intégration des fichiers IFC dans la plateforme de plan-de-maison.
+* Profils simples (rectangles, polylignes)  
+* Profils complexes décrits par **`IFCCOMPOSITECURVE`**  
+
+---
+
+## Pré-requis
+
+| Outil / lib | Version minimale |
+|-------------|------------------|
+| .NET SDK    | **8.0**          |
+| OpenTK      | 4.x (référence NuGet déjà dans le projet) |
+| GPU         | Compatible OpenGL 3.3 |
+
+---
+
+## Compiler 
+
+```bash
+dotnet build      # restauration + compilation
+```
+
+## Lancer le viewer
+
+```bash
+# 1) modèle par défaut (data/Projet.ifc)
+dotnet run
+
+# 2) n’importe quel IFC
+dotnet run <chemin-vers-fichier.ifc>
+```
+
+## Contrôles dans la fenêtre
+
+| Action   | Contrôle                     |
+| -------- | ---------------------------- |
+| Rotation | Clic gauche + glisser souris |
+| Zoom     | (Flèche ↑ / Flèche ↓)        |
+
+## Organisation du code
+
+```bash
+├── Program.cs           # Parse -> Scene -> Viewer
+├── Services/            # FileService, IFCFileParser
+├── Utils/               # IfcGeom (placements, profils…)
+├── Models/              # IFCWall, IFCColumn, IFCSegment…
+└── Scene/Extractor/     # WallExtractor, ColumnExtractor, SlabExtractor
+
+```
+- Les extracteurs transforment les entités IFC en IFCFigure.
+- Le Viewer3D initialise OpenGL et dessine les figures.
 
